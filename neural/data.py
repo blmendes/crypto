@@ -18,4 +18,6 @@ def get_minute_data(symbol, interval, lookback):
     df = df.astype(float)
     return df 
 
+df = get_minute_data('ADAUSDT', '1m', '10000')
+df.to_csv('ada.csv')
 
