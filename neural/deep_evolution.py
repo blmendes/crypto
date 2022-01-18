@@ -1,4 +1,3 @@
-from webbrowser import get
 import numpy as np
 import pandas as pd
 import time
@@ -9,6 +8,29 @@ sns.set()
 
 import pkg_resources
 import types
+from data import get_minute_data
+
+def get_imports():
+    for name, val in globals().items():
+        if isinstance(val, types.ModuleType):
+            name = val.__name__.split('.')[0]
+        elif isinstance(val, type):
+            name = val.__module__.split('.')[0]
+        poorly_named_packages = {'PIL': 'Pillow', 'sklearn': 'scikit-learn'}
+        if name in poorly_named_packages.keys():
+            name = poorly_named_packages[name]
+        yield name
+
+'''
+imports = list(set(get_imports()))
+requirements = []
+for m in pkg_resources.working_set:
+    if m.project_name in imports and m.project_name != 'pip':
+        requirements.append((m.project_name, m.version))
+
+for r in requirements:
+    print('{}=={}'.format(*r))
+'''
 
 def get_state(data, t, n):
     d = t - n + 1
@@ -18,17 +40,14 @@ def get_state(data, t, n):
         res.append(block[i + 1] - block[i])
     return np.array([res])
 
-from data import get_minute_data
-
-df = get_minute_data('ADAUSDT', '1m', '10000')
-df.dropna(inplace=True)
+df = pd.read_csv('/Users/mac/Desktop/crypto/ada.csv')
+# df = get_minute_data('ADAUSDT', '1m', '1000')
+print(df.head())
 
 close = df.Close.values.tolist()
 window_size = 30
 skip = 1
 l = len(close) - 1
-
-print(close)
 
 class Deep_Evolution_Strategy:
 
@@ -55,36 +74,38 @@ class Deep_Evolution_Strategy:
 
     def train(self, epoch = 100, print_every = 1):
         lasttime = time.time()
+        
         for i in range(epoch):
-            population = []
-            rewards = np.zeros(self.population_size)
-            for k in range(self.population_size):
-                x = []
-                for w in self.weights:
-                    x.append(np.random.randn(*w.shape))
-                population.append(x)
-            for k in range(self.population_size):
-                weights_population = self._get_weight_from_population(
-                    self.weights, population[k]
-                )
-                rewards[k] = self.reward_function(weights_population)
-            rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-            for index, w in enumerate(self.weights):
-                A = np.array([p[index] for p in population])
-                self.weights[index] = (
-                    w
-                    + self.learning_rate
-                    / (self.population_size * self.sigma)
-                    * np.dot(A.T, rewards).T
-                )
-            if (i + 1) % print_every == 0:
-               
-               '''
-                print(
-                    'iter %d. reward: %f'
-                    % (i + 1, self.reward_function(self.weights))
-                )
-        print('time taken to train:', time.time() - lasttime, 'seconds')'''
+            try:
+                population = []
+                rewards = np.zeros(self.population_size)
+                for k in range(self.population_size):
+                    x = []
+                    for w in self.weights:
+                        x.append(np.random.randn(*w.shape))
+                    population.append(x)
+                for k in range(self.population_size):
+                    weights_population = self._get_weight_from_population(
+                        self.weights, population[k]
+                    )
+                    rewards[k] = self.reward_function(weights_population)
+                rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+                for index, w in enumerate(self.weights):
+                    A = np.array([p[index] for p in population])
+                    self.weights[index] = (
+                        w
+                        + self.learning_rate
+                        / (self.population_size * self.sigma)
+                        * np.dot(A.T, rewards).T
+                    )
+                if (i + 1) % print_every == 0:
+                    print(
+                        'iter %d. reward: %f'
+                        % (i + 1, self.reward_function(self.weights))
+                    )
+            except:
+                pass
+        print('time taken to train:', time.time() - lasttime, 'seconds')
 
 
 class Model:
@@ -232,14 +253,7 @@ class Agent:
         plt.legend()
         plt.show()
 
-## TRADE SETUP
-window_size = 30
-initial_amount = 100000
-max_buy_units = 0.001
-max_sell_units = 0.001
-
-model = Model(window_size, 500, 3)
-agent = Agent(model, initial_amount, max_buy_units, max_sell_units)
-agent.fit(500, 10)
-
+model = Model(window_size, 100, 3) # input_size, layer_size, output_size
+agent = Agent(model, 100, 1, 1) # model, money, max_buy, max_sell
+agent.fit(100, 10)
 agent.buy()

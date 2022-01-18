@@ -16,8 +16,17 @@ def get_minute_data(symbol, interval, lookback):
     df = df.set_index('Time')
     df.index = pd.to_datetime(df.index, unit = 'ms')
     df = df.astype(float)
+    df['Date'] = df.index
+    df.reset_index(drop=True, inplace= True)
+    df.dropna(axis=1, inplace=True)
+    df['Adj Close'] = df['Close']
+    df['Volume'] = df['Volume'].astype(int)
+    df = df[['Date', 'Open','High','Low','Close','Adj Close','Volume']]
     return df 
 
-df = get_minute_data('ADAUSDT', '1m', '10000')
+df = get_minute_data('DOGEUSDT', '1d', '200000')
+print(df.head())
 df.to_csv('ada.csv')
+
+
 
