@@ -45,7 +45,9 @@ def createframe(msg):
 from binance import BinanceSocketManager
 bsm = BinanceSocketManager(client)
 
-def strategy(buy_amt, SL= 0.985, Target = 1.02, open_position =False):
+def strategy(buy_amt, SL= 0.975, Target = 1.035, open_position =False):
+    #validar tendencia e potencial de crescimento deve ser maior que o TP 
+    #validar padrão de candlesticks
     try:
         asset = get_top_symbols()
         df = get_minute_data(asset, '1m', '120')
@@ -68,20 +70,18 @@ def strategy(buy_amt, SL= 0.985, Target = 1.02, open_position =False):
                 print('Something wrong')
                 time.sleep(61)
                 df = get_minute_data(asset, '1m', '2')
-            print(df.Close[-1])
-            print(f'current Close is' + str(df.Close[-1]))
+
+            print(f'current Close is' + str(df.Close[len(df.Close)-1]))
             print(f'current Target is' + str(buyprice * Target))
             print(f'current SL is' + str(buyprice * SL))
 
-            if df.Close[-1] <= buyprice * SL or df.Close[-1] >= buyprice * Target:
+            if df.Close[len(df.Close)-1] <= buyprice * SL or df.Close[len(df.Close)-1] >= buyprice * Target:
                 order = client.create_order(symbol=asset, side = 'SELL', type = 'MARKET', quantity=qty)
                 print(order)
                 break
 
-df = get_minute_data('FISUSDT', '1m', '20')
+print(get_top_symbols())
+df = get_minute_data(get_top_symbols(), '1m', '20')
 
 while True:
-    if df.Close[len(df.Close)-1] <= 0.86690000 * 0.985 or df.Close[len(df.Close)-1] >= 0.86690000 * 1.02:
-        order = client.create_order(symbol='FISUSDT', side = 'SELL', type = 'MARKET', quantity=23)
-        print(order)
-    
+    strategy(20)
